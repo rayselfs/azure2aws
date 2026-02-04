@@ -75,6 +75,16 @@ func runUpdate(currentVersion string, force bool) error {
 		return fmt.Errorf("no release found for %s/%s", runtime.GOOS, runtime.GOARCH)
 	}
 
+	if !force {
+		fmt.Printf("\nDo you want to update to %s? [y/N]: ", release.TagName)
+		var response string
+		fmt.Scanln(&response)
+		if response != "y" && response != "Y" {
+			fmt.Println("Update cancelled.")
+			return nil
+		}
+	}
+
 	fmt.Printf("Downloading %s...\n", asset.Name)
 	tmpFile, err := downloadFile(asset.BrowserDownloadURL)
 	if err != nil {
