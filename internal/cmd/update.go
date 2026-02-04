@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	githubAPIURL   = "https://api.github.com/repos/user/azure2aws/releases/latest"
-	updateRepoName = "user/azure2aws"
+	githubAPIURL   = "https://api.github.com/repos/rayselfs/azure2aws/releases/latest"
+	updateRepoName = "rayselfs/azure2aws"
 )
 
 type GitHubRelease struct {
@@ -127,12 +127,7 @@ func getLatestRelease() (*GitHubRelease, error) {
 func findAssets(release *GitHubRelease, goos, goarch string) (*GitHubAsset, *GitHubAsset) {
 	var asset, checksumAsset *GitHubAsset
 
-	archName := goarch
-	if goarch == "amd64" {
-		archName = "x86_64"
-	}
-
-	archiveName := fmt.Sprintf("azure2aws_%s_%s_%s.tar.gz", strings.TrimPrefix(release.TagName, "v"), goos, archName)
+	archiveName := fmt.Sprintf("azure2aws_%s_%s_%s.tar.gz", strings.TrimPrefix(release.TagName, "v"), goos, goarch)
 	checksumName := "azure2aws_checksums.txt"
 
 	for i := range release.Assets {

@@ -39,7 +39,7 @@ archives:
       - config.example.yaml
 
 checksum:
-  name_template: 'checksums.txt'
+  name_template: 'azure2aws_checksums.txt'
   algorithm: sha256
 
 snapshot:
@@ -78,7 +78,7 @@ changelog:
 
 release:
   github:
-    owner: user
+    owner: rayselfs
     name: azure2aws
   draft: false
   prerelease: auto
@@ -94,20 +94,20 @@ release:
     
     #### macOS
     ```bash
-    curl -L https://github.com/user/azure2aws/releases/download/{{.Tag}}/azure2aws_{{.Version}}_darwin_amd64.tar.gz | tar xz
+    curl -L https://github.com/rayselfs/azure2aws/releases/download/{{.Tag}}/azure2aws_{{.Version}}_darwin_amd64.tar.gz | tar xz
     sudo mv azure2aws /usr/local/bin/
     ```
     
     #### Linux
     ```bash
-    curl -L https://github.com/user/azure2aws/releases/download/{{.Tag}}/azure2aws_{{.Version}}_linux_amd64.tar.gz | tar xz
+    curl -L https://github.com/rayselfs/azure2aws/releases/download/{{.Tag}}/azure2aws_{{.Version}}_linux_amd64.tar.gz | tar xz
     sudo mv azure2aws /usr/local/bin/
     ```
     
     #### Windows
     Download the .zip file, extract, and add to your PATH.
   footer: |
-    **Full Changelog**: https://github.com/user/azure2aws/compare/{{.PreviousTag}}...{{.Tag}}
+    **Full Changelog**: https://github.com/rayselfs/azure2aws/compare/{{.PreviousTag}}...{{.Tag}}
     
     ## Checksums
     
