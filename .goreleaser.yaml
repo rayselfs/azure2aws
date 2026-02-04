@@ -1,0 +1,117 @@
+project_name: azure2aws
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: azure2aws
+    main: ./cmd/azure2aws
+    binary: azure2aws
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.ShortCommit}}
+      - -X main.buildDate={{.Date}}
+
+archives:
+  - id: azure2aws
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - README.md
+      - LICENSE
+      - config.example.yaml
+
+checksum:
+  name_template: 'checksums.txt'
+  algorithm: sha256
+
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - 'merge conflict'
+      - Merge pull request
+      - Merge remote-tracking branch
+      - Merge branch
+  groups:
+    - title: 'Features'
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 0
+    - title: 'Bug Fixes'
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 1
+    - title: 'Performance Improvements'
+      regexp: "^.*perf[(\\w)]*:+.*$"
+      order: 2
+    - title: 'Refactors'
+      regexp: "^.*refactor[(\\w)]*:+.*$"
+      order: 3
+    - title: 'Documentation'
+      regexp: "^.*docs[(\\w)]*:+.*$"
+      order: 4
+    - title: 'Other Changes'
+      order: 999
+
+release:
+  github:
+    owner: user
+    name: azure2aws
+  draft: false
+  prerelease: auto
+  name_template: "{{.ProjectName}} v{{.Version}}"
+  header: |
+    ## Azure2AWS {{.Tag}}
+    
+    AWS SAML Authentication via Azure AD
+    
+    ### Installation
+    
+    Download the appropriate binary for your platform below.
+    
+    #### macOS
+    ```bash
+    curl -L https://github.com/user/azure2aws/releases/download/{{.Tag}}/azure2aws_{{.Version}}_darwin_amd64.tar.gz | tar xz
+    sudo mv azure2aws /usr/local/bin/
+    ```
+    
+    #### Linux
+    ```bash
+    curl -L https://github.com/user/azure2aws/releases/download/{{.Tag}}/azure2aws_{{.Version}}_linux_amd64.tar.gz | tar xz
+    sudo mv azure2aws /usr/local/bin/
+    ```
+    
+    #### Windows
+    Download the .zip file, extract, and add to your PATH.
+  footer: |
+    **Full Changelog**: https://github.com/user/azure2aws/compare/{{.PreviousTag}}...{{.Tag}}
+    
+    ## Checksums
+    
+    Verify your download with SHA256 checksums in `checksums.txt`
+
+announce:
+  skip: true
