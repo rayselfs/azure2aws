@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/user/azure2aws/internal/aws"
@@ -130,19 +131,8 @@ func runLogin(force, skipPrompt bool) error {
 		return fmt.Errorf("failed to save credentials: %w", err)
 	}
 
-	fmt.Printf("\n✓ Credentials saved to profile '%s'\n", profileName)
-	fmt.Printf("  Expires: %s\n", creds.Expiration.Local().Format("2006-01-02 15:04:05"))
-	if creds.Region != "" {
-		fmt.Printf("  Region: %s\n", creds.Region)
-	}
-	if creds.Output != "" {
-		fmt.Printf("  Output: %s\n", creds.Output)
-	}
-
-	fmt.Printf("\nTo use this profile, run:\n")
-	fmt.Printf("  export AWS_PROFILE=%s\n", profileName)
-	fmt.Printf("\nOr use it directly:\n")
-	fmt.Printf("  aws --profile %s sts get-caller-identity\n", profileName)
+	fmt.Println("\n" + formatCredentialsSummary(profileName, creds))
+	fmt.Println("\n" + formatUsageInstructions(profileName))
 
 	if !skipPrompt && !keyring.HasPassword(profileName) {
 		if savePassword, err := prompter.Confirm("Save password to keyring for future logins?", false); err == nil && savePassword {
@@ -188,4 +178,38 @@ func selectRole(roles []*saml.AWSRole) (*saml.AWSRole, error) {
 	}
 
 	return roles[idx], nil
+}
+
+func formatCredentialsSummary(profileName string, creds *aws.Credentials) string {
+	var sb strings.Builder
+
+	sb.WriteString("╭─────────────────────────────────────────────────────────────╮\n")
+	sb.WriteString("│ ✓ Credentials Saved                                         │\n")
+	sb.WriteString("╞═════════════════════════════════════════════════════════════╡\n")
+	sb.WriteString(fmt.Sprintf("│ Profile: %-50s │\n", profileName))
+	sb.WriteString(fmt.Sprintf("│ Expires: %-50s │\n", creds.Expiration.Local().Format("2006-01-02 15:04:05")))
+
+	if creds.Region != "" {
+		sb.WriteString(fmt.Sprintf("│ Region:  %-50s │\n", creds.Region))
+	}
+
+	sb.WriteString("╰─────────────────────────────────────────────────────────────╯")
+
+	return sb.String()
+}
+
+func formatUsageInstructions(profileName string) string {
+	var sb strings.Builder
+
+	sb.WriteString("╭─────────────────────────────────────────────────────────────╮\n")
+	sb.WriteString("│ Usage Instructions                                          │\n")
+	sb.WriteString("╞═════════════════════════════════════════════════════════════╡\n")
+	sb.WriteString("│ Set as default profile:                                     │\n")
+	sb.WriteString(fmt.Sprintf("│   export AWS_PROFILE=%-42s │\n", profileName))
+	sb.WriteString("│                                                             │\n")
+	sb.WriteString("│ Or use directly:                                            │\n")
+	sb.WriteString(fmt.Sprintf("│   aws --profile %-19s sts get-caller-identity │\n", profileName))
+	sb.WriteString("╰─────────────────────────────────────────────────────────────╯")
+
+	return sb.String()
 }
