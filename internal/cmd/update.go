@@ -12,6 +12,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -116,7 +117,10 @@ func runUpdate(currentVersion string, force bool) error {
 }
 
 func getLatestRelease() (*GitHubRelease, error) {
-	resp, err := http.Get(githubAPIURL)
+	client := &http.Client{
+		Timeout: 3 * time.Second,
+	}
+	resp, err := client.Get(githubAPIURL)
 	if err != nil {
 		return nil, err
 	}
@@ -132,6 +136,20 @@ func getLatestRelease() (*GitHubRelease, error) {
 	}
 
 	return &release, nil
+}
+
+func CheckForUpdateAsync(currentVersion string) {
+	go func() {
+		release, err := getLatestRelease()
+		if err != nil {
+			return
+		}
+
+		if release.TagName != currentVersion && release.TagName != "" {
+			fmt.Fprintf(os.Stderr, "\n\033[33m💡 A new version of azure2aws is available: %s → %s\033[0m\n", currentVersion, release.TagName)
+			fmt.Fprintf(os.Stderr, "\033[33m   Run 'azure2aws update' to upgrade.\033[0m\n\n")
+		}
+	}()
 }
 
 func findAssets(release *GitHubRelease, goos, goarch string) (*GitHubAsset, *GitHubAsset) {

@@ -34,6 +34,10 @@ Simplified alternative to saml2aws, focused on Azure AD only.`,
 					cfgFile = filepath.Join(home, ".azure2aws", "config.yaml")
 				}
 			}
+
+			if cmd.Name() != "update" && cmd.Name() != "version" {
+				CheckForUpdateAsync(version)
+			}
 		},
 	}
 
