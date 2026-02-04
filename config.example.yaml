@@ -1,0 +1,29 @@
+# azure2aws configuration example
+# Location: ~/.azure2aws/config.yaml
+
+defaults:
+  region: us-east-1
+  session_duration: 3600
+
+profiles:
+  production:
+    url: https://myapps.microsoft.com/signin/AWS/12345678-1234-1234-1234-123456789abc
+    app_id: 12345678-1234-1234-1234-123456789abc
+    username: user@example.com
+    role_arn: arn:aws:iam::123456789012:role/ProductionAdminRole
+    region: us-west-2
+    output: json
+
+  development:
+    url: https://myapps.microsoft.com/signin/AWS/87654321-4321-4321-4321-cba987654321
+    app_id: 87654321-4321-4321-4321-cba987654321
+    username: user@example.com
+    role_arn: arn:aws:iam::987654321098:role/DeveloperRole
+    output: json
+
+  staging:
+    url: https://myapps.microsoft.com/signin/AWS/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee
+    app_id: aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee
+    username: user@example.com
+    region: ap-northeast-1
+    output: table
