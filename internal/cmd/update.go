@@ -8,10 +8,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -56,6 +59,18 @@ func runUpdate(currentVersion string, force bool) error {
 	if err != nil {
 		return fmt.Errorf("failed to get current executable path: %w", err)
 	}
+
+	execPath, err = resolveSymlink(execPath)
+	if err != nil {
+		return fmt.Errorf("failed to resolve executable path: %w", err)
+	}
+
+	lockFile := execPath + ".lock"
+	unlock, err := acquireLock(lockFile)
+	if err != nil {
+		return fmt.Errorf("another update is already in progress: %w", err)
+	}
+	defer unlock()
 
 	fmt.Println("Checking for updates...")
 	release, err := getLatestRelease()
@@ -288,36 +303,140 @@ func extractBinary(archivePath string) (string, error) {
 }
 
 func replaceBinary(oldPath, newPath string) error {
-	backupPath := oldPath + ".backup"
-	if err := os.Rename(oldPath, backupPath); err != nil {
-		return err
+	oldInfo, err := os.Stat(oldPath)
+	if err != nil {
+		return fmt.Errorf("failed to stat old binary: %w", err)
 	}
 
-	if err := copyFile(newPath, oldPath); err != nil {
+	tmpPath := oldPath + ".new"
+	if err := copyFileAtomic(newPath, tmpPath, oldInfo.Mode()); err != nil {
+		return fmt.Errorf("failed to copy new binary: %w", err)
+	}
+	defer os.Remove(tmpPath)
+
+	backupPath := oldPath + ".backup"
+	if err := os.Rename(oldPath, backupPath); err != nil {
+		return fmt.Errorf("failed to backup old binary: %w", err)
+	}
+
+	if err := os.Rename(tmpPath, oldPath); err != nil {
 		os.Rename(backupPath, oldPath)
-		return err
+		return fmt.Errorf("failed to install new binary: %w", err)
 	}
 
 	os.Remove(backupPath)
 	return nil
 }
 
-func copyFile(src, dst string) error {
+func copyFileAtomic(src, dst string, mode fs.FileMode) error {
 	in, err := os.Open(src)
 	if err != nil {
 		return err
 	}
 	defer in.Close()
 
-	out, err := os.Create(dst)
+	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+
+	success := false
+	defer func() {
+		out.Close()
+		if !success {
+			os.Remove(dst)
+		}
+	}()
 
 	if _, err := io.Copy(out, in); err != nil {
 		return err
 	}
 
-	return os.Chmod(dst, 0755)
+	if err := out.Sync(); err != nil {
+		return err
+	}
+
+	dirPath := filepath.Dir(dst)
+	if err := syncDir(dirPath); err != nil {
+		return err
+	}
+
+	success = true
+	return nil
+}
+
+func syncDir(path string) error {
+	if runtime.GOOS == "windows" {
+		return nil
+	}
+
+	dir, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer dir.Close()
+
+	return dir.Sync()
+}
+
+func resolveSymlink(path string) (string, error) {
+	info, err := os.Lstat(path)
+	if err != nil {
+		return "", err
+	}
+
+	if info.Mode()&os.ModeSymlink == 0 {
+		return path, nil
+	}
+
+	resolved, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return "", err
+	}
+
+	return resolved, nil
+}
+
+func acquireLock(lockFile string) (func(), error) {
+	if runtime.GOOS == "windows" {
+		return acquireLockWindows(lockFile)
+	}
+	return acquireLockUnix(lockFile)
+}
+
+func acquireLockUnix(lockFile string) (func(), error) {
+	f, err := os.OpenFile(lockFile, os.O_CREATE|os.O_RDWR, 0600)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := syscall.Flock(int(f.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
+		f.Close()
+		return nil, fmt.Errorf("failed to acquire lock: %w", err)
+	}
+
+	unlock := func() {
+		syscall.Flock(int(f.Fd()), syscall.LOCK_UN)
+		f.Close()
+		os.Remove(lockFile)
+	}
+
+	return unlock, nil
+}
+
+func acquireLockWindows(lockFile string) (func(), error) {
+	f, err := os.OpenFile(lockFile, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0600)
+	if err != nil {
+		if os.IsExist(err) {
+			return nil, fmt.Errorf("lock file exists, another update may be in progress")
+		}
+		return nil, err
+	}
+
+	unlock := func() {
+		f.Close()
+		os.Remove(lockFile)
+	}
+
+	return unlock, nil
 }
