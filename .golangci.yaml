@@ -1,0 +1,36 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - govet
+    - gofmt
+    - golint
+    - errcheck
+    - staticcheck
+    - unused
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters-settings:
+  gofumpt: {}
+  golint:
+    min-confidence: 0.8
+
+# line length guide for editors/tools
+format:
+  max-line-length: 120
+
+# exclude vendor and generated files
+exclude:
+  - "vendor/.*"
+  - ".*generated.*"
+  - ".*gen.go"
+
+per-path:
+  vendor:
+    linters:
+      disable-all: true
