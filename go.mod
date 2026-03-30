@@ -9,7 +9,7 @@ require (
 	github.com/beevik/etree v1.6.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/spf13/cobra v1.8.0
-	github.com/zalando/go-keyring v0.2.4
+	github.com/zalando/go-keyring v0.2.8
 	golang.org/x/net v0.49.0
 	golang.org/x/term v0.39.0
 	gopkg.in/ini.v1 v1.67.1
@@ -17,15 +17,14 @@ require (
 )
 
 require (
-	github.com/alessio/shellescape v1.4.1 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.17 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.17 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.17 // indirect
 	github.com/aws/smithy-go v1.24.0 // indirect
-	github.com/danieljoos/wincred v1.2.0 // indirect
-	github.com/godbus/dbus/v5 v5.1.0 // indirect
+	github.com/danieljoos/wincred v1.2.3 // indirect
+	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/sys v0.40.0 // indirect
